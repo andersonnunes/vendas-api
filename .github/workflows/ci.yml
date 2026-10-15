@@ -1,0 +1,45 @@
+name: CI
+
+# Sem filtro de paths: este repositório contém um único serviço, então todo PR já é relevante.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore vendas-api.slnx
+
+      - name: Lint (dotnet format)
+        run: dotnet format vendas-api.slnx --verify-no-changes
+
+      - name: Build
+        run: dotnet build vendas-api.slnx --no-restore -c Release
+
+      # Threshold de cobertura (80%, linhas) via coverlet.msbuild — falha o `dotnet test`
+      # (exit code != 0) se ficar abaixo.
+      - name: Test
+        run: >
+          dotnet test tests/VendasApi.Tests/VendasApi.Tests.csproj -c Release
+          /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+          /p:ExcludeByFile="**/obj/**/*.cs"
+          /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=total
+
+      - name: Build Docker image
+        run: docker build -f src/VendasApi/Dockerfile -t vendas-api:ci .
+
+      - name: Scan image (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: vendas-api:ci
+          severity: HIGH,CRITICAL
+          exit-code: "1"

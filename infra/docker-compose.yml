@@ -1,0 +1,41 @@
+# Ambiente de desenvolvimento local deste repositório, isolado do veiculos-api.
+# Rodar a partir da raiz do repositório: docker compose -f infra/docker-compose.yml up --build
+#
+# Banco próprio (vendas-db) — nenhuma conexão de código ainda (nasce junto do Épico 2, que
+# adiciona listagens/venda/webhook); aqui só garante que o serviço e o banco sobem juntos.
+name: vendas-api
+
+services:
+  vendas-api:
+    build:
+      context: ..
+      dockerfile: src/VendasApi/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Credenciais de dev do próprio vendas-db abaixo — ambiente local efêmero, não é
+      # segredo de produção.
+      - ConnectionStrings__VendasDb=Host=vendas-db;Port=5432;Database=vendas;Username=vendas;Password=vendas
+    ports:
+      - "5002:8080"
+    depends_on:
+      vendas-db:
+        condition: service_healthy
+
+  vendas-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=vendas
+      - POSTGRES_USER=vendas
+      - POSTGRES_PASSWORD=vendas
+    ports:
+      - "5434:5432"
+    volumes:
+      - vendas-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vendas -d vendas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vendas-db-data:
