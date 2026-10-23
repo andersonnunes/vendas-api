@@ -15,11 +15,17 @@ services:
       # Credenciais de dev do próprio vendas-db abaixo — ambiente local efêmero, não é
       # segredo de produção.
       - ConnectionStrings__VendasDb=Host=vendas-db;Port=5432;Database=vendas;Username=vendas;Password=vendas
+      # Dentro da rede do compose o Keycloak responde por `keycloak`; o emissor público
+      # (localhost:8280) continua sendo o que o token carrega no claim `iss`.
+      - Keycloak__MetadataInterna=http://keycloak:8080/realms/revendax/.well-known/openid-configuration
+      - Keycloak__EndpointToken=http://keycloak:8080/realms/revendax/protocol/openid-connect/token
     ports:
       - "5002:8080"
     depends_on:
       vendas-db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
 
   vendas-db:
     image: postgres:16-alpine
@@ -37,5 +43,40 @@ services:
       timeout: 5s
       retries: 10
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    environment:
+      # Credenciais de dev do admin do Keycloak local — não é segredo de produção.
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://keycloak-db:5432/keycloak
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak
+      - KC_HOSTNAME=http://localhost:8280
+    ports:
+      - "8280:8080"
+    volumes:
+      - ./keycloak/realm-revendax.json:/opt/keycloak/data/import/realm-revendax.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+
+  keycloak-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   vendas-db-data:
+  keycloak-db-data:

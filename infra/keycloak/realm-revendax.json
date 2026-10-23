@@ -1,0 +1,129 @@
+{
+  "realm": "revendax",
+  "enabled": true,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "administrador" },
+      { "name": "vendedor" },
+      { "name": "servico" }
+    ]
+  },
+  "clientScopes": [
+    {
+      "name": "revendax-audiencias",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "papeis-do-realm",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "false",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "audiencia-veiculos-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "veiculos-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "audiencia-vendas-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "vendas-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "veiculos-api",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-veiculos-api-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "defaultClientScopes": ["revendax-audiencias"]
+    },
+    {
+      "clientId": "vendas-api",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-vendas-api-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "defaultClientScopes": ["revendax-audiencias"]
+    },
+    {
+      "clientId": "revendax-dev-cli",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["revendax-audiencias"]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-veiculos-api",
+      "enabled": true,
+      "serviceAccountClientId": "veiculos-api",
+      "realmRoles": ["servico"]
+    },
+    {
+      "username": "service-account-vendas-api",
+      "enabled": true,
+      "serviceAccountClientId": "vendas-api",
+      "realmRoles": ["servico"]
+    },
+    {
+      "username": "admin-dev",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Administrador",
+      "lastName": "Dev",
+      "email": "admin-dev@revendax.local",
+      "credentials": [{ "type": "password", "value": "dev-admin", "temporary": false }],
+      "realmRoles": ["administrador"]
+    },
+    {
+      "username": "vendedor-dev",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Vendedor",
+      "lastName": "Dev",
+      "email": "vendedor-dev@revendax.local",
+      "credentials": [{ "type": "password", "value": "dev-vendedor", "temporary": false }],
+      "realmRoles": ["vendedor"]
+    }
+  ]
+}
