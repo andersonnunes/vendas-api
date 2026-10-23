@@ -34,6 +34,13 @@ jobs:
           /p:ExcludeByFile="**/obj/**/*.cs"
           /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=total
 
+      # O realm do Keycloak é duplicado nos dois repositórios (cada um sobe sozinho) — esta
+      # checagem falha se a cópia deste repositório divergir da do outro.
+      - name: Checar divergência do realm com veiculos-api
+        run: |
+          git clone --depth 1 https://github.com/andersonnunes/veiculos-api.git ../veiculos-api
+          diff infra/keycloak/realm-revendax.json ../veiculos-api/infra/keycloak/realm-revendax.json
+
       - name: Build Docker image
         run: docker build -f src/VendasApi/Dockerfile -t vendas-api:ci .
 

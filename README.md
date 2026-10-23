@@ -45,6 +45,23 @@ dotnet restore
 dotnet run --project src/VendasApi
 ```
 
+### Autenticação (Keycloak de desenvolvimento)
+
+O compose sobe um Keycloak com o realm `revendax` já importado (`infra/keycloak/realm-revendax.json`).
+Credenciais de dev, não são de produção:
+
+```bash
+# Token de vendedor (usuário vendedor-dev / dev-vendedor)
+curl -s -d grant_type=password -d client_id=revendax-dev-cli \
+  -d username=vendedor-dev -d password=dev-vendedor \
+  http://localhost:8280/realms/revendax/protocol/openid-connect/token
+
+# Token de serviço (client_credentials) — o que outra API usaria para chamar esta
+curl -s -d grant_type=client_credentials -d client_id=veiculos-api \
+  -d client_secret=dev-veiculos-api-secret \
+  http://localhost:8280/realms/revendax/protocol/openid-connect/token
+```
+
 ## Como testar
 
 ```bash
