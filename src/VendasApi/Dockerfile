@@ -19,4 +19,5 @@ COPY --from=build /app/publish .
 
 # A imagem base já expõe ASPNETCORE_HTTP_PORTS=8080 por padrão (.NET 8+).
 EXPOSE 8080
+USER app
 ENTRYPOINT ["dotnet", "VendasApi.dll"]
