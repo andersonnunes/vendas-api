@@ -178,5 +178,10 @@
       ]
     }
   ],
-  "loginTheme": "revendax"
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "pt-BR",
+    "en"
+  ],
+  "defaultLocale": "pt-BR"
 }
