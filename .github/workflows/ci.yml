@@ -38,7 +38,11 @@ jobs:
       # checagem falha se a cópia deste repositório divergir da do outro.
       - name: Checar divergência do realm com veiculos-api
         run: |
-          git clone --depth 1 https://github.com/andersonnunes/veiculos-api.git ../veiculos-api
+          # Compara com o mesmo branch do outro repositório (PR), ou com a main se ele não existir.
+          REF="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          if ! git clone --depth 1 --branch "$REF" https://github.com/andersonnunes/veiculos-api.git ../veiculos-api 2>/dev/null; then
+            git clone --depth 1 https://github.com/andersonnunes/veiculos-api.git ../veiculos-api
+          fi
           diff infra/keycloak/realm-revendax.json ../veiculos-api/infra/keycloak/realm-revendax.json
 
       - name: Build Docker image

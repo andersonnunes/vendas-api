@@ -4,9 +4,15 @@
   "sslRequired": "none",
   "roles": {
     "realm": [
-      { "name": "administrador" },
-      { "name": "vendedor" },
-      { "name": "servico" }
+      {
+        "name": "administrador"
+      },
+      {
+        "name": "vendedor"
+      },
+      {
+        "name": "servico"
+      }
     ]
   },
   "clientScopes": [
@@ -68,7 +74,9 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "defaultClientScopes": ["revendax-audiencias"]
+      "defaultClientScopes": [
+        "revendax-audiencias"
+      ]
     },
     {
       "clientId": "vendas-api",
@@ -80,7 +88,9 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "defaultClientScopes": ["revendax-audiencias"]
+      "defaultClientScopes": [
+        "revendax-audiencias"
+      ]
     },
     {
       "clientId": "revendax-dev-cli",
@@ -89,7 +99,29 @@
       "publicClient": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
-      "defaultClientScopes": ["revendax-audiencias"]
+      "defaultClientScopes": [
+        "revendax-audiencias"
+      ]
+    },
+    {
+      "clientId": "revendax-web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "revendax-audiencias"
+      ]
     }
   ],
   "users": [
@@ -97,13 +129,17 @@
       "username": "service-account-veiculos-api",
       "enabled": true,
       "serviceAccountClientId": "veiculos-api",
-      "realmRoles": ["servico"]
+      "realmRoles": [
+        "servico"
+      ]
     },
     {
       "username": "service-account-vendas-api",
       "enabled": true,
       "serviceAccountClientId": "vendas-api",
-      "realmRoles": ["servico"]
+      "realmRoles": [
+        "servico"
+      ]
     },
     {
       "username": "admin-dev",
@@ -112,8 +148,16 @@
       "firstName": "Administrador",
       "lastName": "Dev",
       "email": "admin-dev@revendax.local",
-      "credentials": [{ "type": "password", "value": "dev-admin", "temporary": false }],
-      "realmRoles": ["administrador"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "administrador"
+      ]
     },
     {
       "username": "vendedor-dev",
@@ -122,8 +166,16 @@
       "firstName": "Vendedor",
       "lastName": "Dev",
       "email": "vendedor-dev@revendax.local",
-      "credentials": [{ "type": "password", "value": "dev-vendedor", "temporary": false }],
-      "realmRoles": ["vendedor"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-vendedor",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "vendedor"
+      ]
     }
   ]
 }
