@@ -59,6 +59,7 @@ services:
       - "8280:8080"
     volumes:
       - ./keycloak/realm-revendax.json:/opt/keycloak/data/import/realm-revendax.json:ro
+      - ./keycloak/themes/revendax:/opt/keycloak/themes/revendax:ro
     depends_on:
       keycloak-db:
         condition: service_healthy
