@@ -8,7 +8,7 @@ using VendasApi.Tests.Infraestrutura;
 namespace VendasApi.Tests.Seguranca;
 
 [Collection(AmbienteCollection.NomeColecao)]
-public sealed class TokenDeServicoTests(KeycloakFixture keycloak, PostgresFixture postgres)
+public sealed class TokenDeServicoTests(KeycloakFixture keycloak)
 {
     [Fact]
     public async Task ObterAsync_ReutilizaTokenEnquantoValidoERenovaAposExpiracao()

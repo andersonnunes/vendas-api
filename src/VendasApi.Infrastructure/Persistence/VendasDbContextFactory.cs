@@ -8,6 +8,6 @@ internal sealed class VendasDbContextFactory : IDesignTimeDbContextFactory<Venda
 {
     public VendasDbContext CreateDbContext(string[] args) => new(
         new DbContextOptionsBuilder<VendasDbContext>()
-            .UseNpgsql("Host=localhost;Port=5434;Database=vendas;Username=vendas;Password=vendas")
+            .UseNpgsql("Host=localhost;Port=5434;Database=vendas;Username=vendas")
             .Options);
 }

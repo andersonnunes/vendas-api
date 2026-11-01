@@ -12,18 +12,21 @@ public sealed class AplicarSnapshotVeiculoCasoDeUso(IVeiculoCopiaRepositorio rep
         var anoAtual = relogio.GetUtcNow().Year;
         VeiculoCopia.ValidarSnapshot(dados, anoAtual);
 
-        for (var tentativa = 1; ; tentativa++)
+        for (var tentativa = 1; tentativa < TentativasMaximas; tentativa++)
         {
             try
             {
                 await repositorio.AplicarAsync(dados.Id, copia => Aplicar(copia, dados, anoAtual), cancellationToken);
                 return;
             }
-            catch (ConcorrenciaCopiaVeiculoException) when (tentativa < TentativasMaximas)
+            catch (ConcorrenciaCopiaVeiculoException)
             {
                 // Outro envio criou a cópia entre a leitura e a gravação: a próxima tentativa a encontra e a atualiza.
             }
         }
+
+        // Última tentativa: se também houver conflito, a exceção segue para o chamador.
+        await repositorio.AplicarAsync(dados.Id, copia => Aplicar(copia, dados, anoAtual), cancellationToken);
     }
 
     private static VeiculoCopia Aplicar(VeiculoCopia? copia, DadosSnapshot dados, int anoAtual)

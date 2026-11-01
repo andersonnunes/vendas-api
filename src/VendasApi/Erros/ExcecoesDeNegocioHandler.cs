@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using VendasApi.Application.Veiculos;
+using VendasApi.Application.Veiculos.Listagem;
 using VendasApi.Domain.Veiculos;
 
 namespace VendasApi.Erros;
@@ -22,6 +23,8 @@ internal sealed class ExcecoesDeNegocioHandler : IExceptionHandler
                     ["codigo"] = "veiculo_duplicado",
                     ["campo"] = duplicado.Campo,
                 }),
+            ParametrosPaginacaoInvalidosException paginacao => Results.ValidationProblem(
+                new Dictionary<string, string[]> { ["paginacao"] = [paginacao.Message] }),
             ConcorrenciaCopiaVeiculoException => Results.Problem(
                 title: "Conflito de sincronização",
                 detail: "A cópia do veículo foi alterada por outra operação. Tente novamente.",

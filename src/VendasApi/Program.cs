@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 using Scalar.AspNetCore;
 using VendasApi.Application.Veiculos;
+using VendasApi.Application.Veiculos.Listagem;
 using VendasApi.Erros;
 using VendasApi.Infrastructure;
 using VendasApi.Infrastructure.Persistence;
@@ -18,6 +19,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ExcecoesDeNegocioHandler>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
+builder.Services.AddScoped<ListarVeiculosDisponiveisCasoDeUso>();
 
 var app = builder.Build();
 
