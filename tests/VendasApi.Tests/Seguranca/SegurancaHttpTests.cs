@@ -6,15 +6,17 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
+using VendasApi.Tests.Infraestrutura;
+
 namespace VendasApi.Tests.Seguranca;
 
-[Collection(KeycloakCollection.NomeColecao)]
-public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
+[Collection(AmbienteCollection.NomeColecao)]
+public sealed class SegurancaHttpTests(KeycloakFixture keycloak, PostgresFixture postgres)
 {
     [Fact]
     public async Task SemToken_RetornaNaoAutorizado()
     {
-        using var fabrica = new ApiComKeycloak(keycloak);
+        using var fabrica = new ApiComKeycloak(keycloak, postgres);
         var cliente = fabrica.CreateClient();
 
         var resposta = await cliente.GetAsync("/testes/operacao");
@@ -25,7 +27,7 @@ public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
     [Fact]
     public async Task TokenDeVendedor_AcessaOperacaoDoCatalogo()
     {
-        using var fabrica = new ApiComKeycloak(keycloak);
+        using var fabrica = new ApiComKeycloak(keycloak, postgres);
         var token = await keycloak.ObterTokenUsuarioAsync("vendedor-dev", "dev-vendedor");
         var cliente = ClienteComToken(fabrica, token);
 
@@ -37,7 +39,7 @@ public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
     [Fact]
     public async Task TokenDeVendedor_NaoAcessaEndpointDeServico()
     {
-        using var fabrica = new ApiComKeycloak(keycloak);
+        using var fabrica = new ApiComKeycloak(keycloak, postgres);
         var token = await keycloak.ObterTokenUsuarioAsync("vendedor-dev", "dev-vendedor");
         var cliente = ClienteComToken(fabrica, token);
 
@@ -49,7 +51,7 @@ public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
     [Fact]
     public async Task TokenDeOutroEmissor_RetornaNaoAutorizado()
     {
-        using var fabrica = new ApiComKeycloak(keycloak);
+        using var fabrica = new ApiComKeycloak(keycloak, postgres);
         using var rsa = RSA.Create(2048);
         var credenciais = new SigningCredentials(new RsaSecurityKey(rsa), SecurityAlgorithms.RsaSha256);
         var token = new JwtSecurityToken(
@@ -69,7 +71,7 @@ public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
     [Fact]
     public async Task ChamadaDeServicoVeiculosApi_AcessaEndpointInterno()
     {
-        using var fabrica = new ApiComKeycloak(keycloak, "veiculos-api", "dev-veiculos-api-secret");
+        using var fabrica = new ApiComKeycloak(keycloak, postgres, "veiculos-api", "dev-veiculos-api-secret");
         var cliente = ClienteDeSaida(fabrica);
 
         var resposta = await cliente.GetAsync("/testes/interno");
@@ -80,7 +82,7 @@ public sealed class SegurancaHttpTests(KeycloakFixture keycloak)
     [Fact]
     public async Task ChamadaDeServicoVendasApi_NaoAcessaEndpointInterno()
     {
-        using var fabrica = new ApiComKeycloak(keycloak, "vendas-api", "dev-vendas-api-secret");
+        using var fabrica = new ApiComKeycloak(keycloak, postgres, "vendas-api", "dev-vendas-api-secret");
         var cliente = ClienteDeSaida(fabrica);
 
         var resposta = await cliente.GetAsync("/testes/interno");

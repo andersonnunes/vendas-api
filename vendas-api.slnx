@@ -1,6 +1,9 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/VendasApi/VendasApi.csproj" />
+    <Project Path="src/VendasApi.Application/VendasApi.Application.csproj" />
+    <Project Path="src/VendasApi.Domain/VendasApi.Domain.csproj" />
+    <Project Path="src/VendasApi.Infrastructure/VendasApi.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/VendasApi.Tests/VendasApi.Tests.csproj" />

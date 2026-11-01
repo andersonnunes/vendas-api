@@ -3,18 +3,20 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using VendasApi.Seguranca;
+using VendasApi.Tests.Infraestrutura;
 
 namespace VendasApi.Tests.Seguranca;
 
-public sealed class ApiComKeycloak(KeycloakFixture keycloak, string clientId, string clientSecret)
+public sealed class ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture postgres, string clientId, string clientSecret)
     : WebApplicationFactory<Program>
 {
-    public ApiComKeycloak(KeycloakFixture keycloak) : this(keycloak, "vendas-api", "dev-vendas-api-secret")
+    public ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture postgres) : this(keycloak, postgres, "vendas-api", "dev-vendas-api-secret")
     {
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("ConnectionStrings:VendasDb", postgres.ConnectionString);
         builder.UseSetting("Keycloak:EmissorPublico", keycloak.EmissorRealm);
         builder.UseSetting("Keycloak:MetadataInterna", keycloak.MetadataRealm);
         builder.UseSetting("Keycloak:EndpointToken", keycloak.EndpointToken);

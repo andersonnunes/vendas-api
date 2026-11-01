@@ -7,9 +7,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0.401 AS build
 WORKDIR /src
 
 COPY ["src/VendasApi/VendasApi.csproj", "src/VendasApi/"]
+COPY ["src/VendasApi.Application/VendasApi.Application.csproj", "src/VendasApi.Application/"]
+COPY ["src/VendasApi.Domain/VendasApi.Domain.csproj", "src/VendasApi.Domain/"]
+COPY ["src/VendasApi.Infrastructure/VendasApi.Infrastructure.csproj", "src/VendasApi.Infrastructure/"]
 RUN dotnet restore "src/VendasApi/VendasApi.csproj"
 
-COPY src/VendasApi/. src/VendasApi/
+COPY src/. src/
 WORKDIR /src/src/VendasApi
 RUN dotnet publish -c Release -o /app/publish --no-restore
 

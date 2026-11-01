@@ -1,5 +1,10 @@
+using Microsoft.EntityFrameworkCore;
 using System.Runtime.CompilerServices;
 using Scalar.AspNetCore;
+using VendasApi.Application.Veiculos;
+using VendasApi.Erros;
+using VendasApi.Infrastructure;
+using VendasApi.Infrastructure.Persistence;
 using VendasApi.Seguranca;
 
 [assembly: InternalsVisibleTo("VendasApi.Tests")]
@@ -9,8 +14,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSegurancaKeycloak(builder.Configuration);
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ExcecoesDeNegocioHandler>();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
 
 var app = builder.Build();
+
+using (var escopo = app.Services.CreateScope())
+    await escopo.ServiceProvider.GetRequiredService<VendasDbContext>().Database.MigrateAsync();
 
 if (app.Environment.IsDevelopment())
 {
@@ -18,6 +30,7 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

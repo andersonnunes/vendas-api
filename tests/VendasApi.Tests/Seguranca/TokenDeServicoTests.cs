@@ -3,10 +3,12 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using VendasApi.Seguranca;
 
+using VendasApi.Tests.Infraestrutura;
+
 namespace VendasApi.Tests.Seguranca;
 
-[Collection(KeycloakCollection.NomeColecao)]
-public sealed class TokenDeServicoTests(KeycloakFixture keycloak)
+[Collection(AmbienteCollection.NomeColecao)]
+public sealed class TokenDeServicoTests(KeycloakFixture keycloak, PostgresFixture postgres)
 {
     [Fact]
     public async Task ObterAsync_ReutilizaTokenEnquantoValidoERenovaAposExpiracao()
