@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using VendasApi.Application.Vendas;
-using VendasApi.Domain;
 using VendasApi.Domain.Veiculos;
 using VendasApi.Domain.Vendas;
 
@@ -39,26 +38,26 @@ public sealed class ProcessarResultadoPagamentoCasoDeUso(
         if (copia is null)
             throw new VeiculoNaoEncontradoException(venda.VeiculoId);
 
-        switch (resultado, venda.Status)
+        var desfecho = venda.AplicarPagamento(resultado);
+
+        return desfecho switch
         {
-            case (ResultadoPagamento.Aprovado, StatusVenda.Reservada):
-                venda.Concluir();
-                copia.MarcarVendido();
-                return new ProcessamentoPagamento(Alterou: true, Concluiu: true, copia.Id);
+            DesfechoPagamento.Concluida => Vendido(copia),
+            DesfechoPagamento.Cancelada => Liberado(copia),
+            _ => new ProcessamentoPagamento(Alterou: false, Concluiu: false, copia.Id),
+        };
+    }
 
-            case (ResultadoPagamento.Cancelado, StatusVenda.Reservada):
-                venda.Cancelar();
-                copia.Liberar();
-                return new ProcessamentoPagamento(Alterou: true, Concluiu: false, copia.Id);
+    private static ProcessamentoPagamento Vendido(VeiculoCopia copia)
+    {
+        copia.MarcarVendido();
+        return new ProcessamentoPagamento(Alterou: true, Concluiu: true, copia.Id);
+    }
 
-            case (ResultadoPagamento.Aprovado, StatusVenda.Concluida):
-            case (ResultadoPagamento.Cancelado, StatusVenda.Cancelada):
-                return new ProcessamentoPagamento(Alterou: false, Concluiu: false, copia.Id);
-
-            default:
-                throw new TransicaoInvalidaException(
-                    $"Pagamento {resultado.ToString().ToLowerInvariant()} não se aplica a uma venda {venda.Status.ToString().ToLowerInvariant()}.");
-        }
+    private static ProcessamentoPagamento Liberado(VeiculoCopia copia)
+    {
+        copia.Liberar();
+        return new ProcessamentoPagamento(Alterou: true, Concluiu: false, copia.Id);
     }
 
     /// <summary>Best-effort: a venda já está concluída; a falha só é registrada para acompanhamento.</summary>

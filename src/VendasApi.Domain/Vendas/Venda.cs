@@ -20,6 +20,32 @@ public sealed class Venda
     public string CodigoPagamento { get; private set; } = string.Empty;
     public DateTimeOffset CriadoEm { get; private set; }
 
+    /// <summary>
+    /// Aplica o resultado do pagamento. Reservada vira concluída (aprovado) ou cancelada (cancelado);
+    /// repetir o resultado que já foi aplicado é idempotente; o resultado contrário lança exceção.
+    /// </summary>
+    public DesfechoPagamento AplicarPagamento(ResultadoPagamento resultado)
+    {
+        switch (resultado, Status)
+        {
+            case (ResultadoPagamento.Aprovado, StatusVenda.Reservada):
+                Concluir();
+                return DesfechoPagamento.Concluida;
+
+            case (ResultadoPagamento.Cancelado, StatusVenda.Reservada):
+                Cancelar();
+                return DesfechoPagamento.Cancelada;
+
+            case (ResultadoPagamento.Aprovado, StatusVenda.Concluida):
+            case (ResultadoPagamento.Cancelado, StatusVenda.Cancelada):
+                return DesfechoPagamento.JaAplicado;
+
+            default:
+                throw new TransicaoInvalidaException(
+                    $"Pagamento {resultado.ToString().ToLowerInvariant()} não se aplica a uma venda {Status.ToString().ToLowerInvariant()}.");
+        }
+    }
+
     /// <summary>Pagamento confirmado: a reserva vira venda concluída.</summary>
     public void Concluir()
     {

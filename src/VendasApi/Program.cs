@@ -27,6 +27,7 @@ builder.Services.AddScoped<ListarVeiculosDisponiveisCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosVendidosCasoDeUso>();
 builder.Services.AddScoped<EfetuarVendaCasoDeUso>();
 builder.Services.AddScoped<ProcessarResultadoPagamentoCasoDeUso>();
+builder.Services.AddSingleton<AssinaturaWebhookVerificador>();
 builder.Services.AddOptions<PagamentosOptions>()
     .Bind(builder.Configuration.GetSection(PagamentosOptions.Secao))
     .ValidateDataAnnotations()

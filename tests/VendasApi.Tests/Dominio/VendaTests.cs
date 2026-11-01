@@ -87,4 +87,48 @@ public class VendaTests
 
         Assert.Throws<TransicaoInvalidaException>(() => venda.Cancelar());
     }
+
+    [Fact]
+    public void AplicarPagamento_AprovadoEmVendaReservada_ConcluiEDevolveConcluida()
+    {
+        var venda = Criar();
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Equal(DesfechoPagamento.Concluida, desfecho);
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_CanceladoEmVendaReservada_CancelaEDevolveCancelada()
+    {
+        var venda = Criar();
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Cancelado);
+
+        Assert.Equal(DesfechoPagamento.Cancelada, desfecho);
+        Assert.Equal(StatusVenda.Cancelada, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_RepetindoOResultadoAplicado_EIdempotente()
+    {
+        var venda = Criar();
+        venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Equal(DesfechoPagamento.JaAplicado, desfecho);
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_ResultadoContrarioAoEstado_LancaTransicaoInvalida()
+    {
+        var venda = Criar();
+        venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Throws<TransicaoInvalidaException>(() => venda.AplicarPagamento(ResultadoPagamento.Cancelado));
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
 }

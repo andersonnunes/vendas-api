@@ -1,10 +1,8 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using VendasApi.Application.Pagamentos;
+using VendasApi.Domain.Vendas;
 
 namespace VendasApi.Pagamentos;
 
@@ -17,7 +15,7 @@ namespace VendasApi.Pagamentos;
 [AllowAnonymous]
 public sealed class WebhookPagamentosController(
     ProcessarResultadoPagamentoCasoDeUso processar,
-    IOptions<PagamentosOptions> opcoes) : ControllerBase
+    AssinaturaWebhookVerificador verificador) : ControllerBase
 {
     private const string CabecalhoAssinatura = "X-Assinatura";
     private static readonly JsonSerializerOptions OpcoesJson = new(JsonSerializerDefaults.Web);
@@ -35,7 +33,7 @@ public sealed class WebhookPagamentosController(
         await Request.Body.CopyToAsync(memoria, cancellationToken);
         var corpo = memoria.ToArray();
 
-        if (!AssinaturaValida(corpo))
+        if (!verificador.Valida(Request.Headers[CabecalhoAssinatura], corpo))
             return Unauthorized();
 
         WebhookPagamentoRequest? request;
@@ -69,20 +67,6 @@ public sealed class WebhookPagamentosController(
         ["aprovado"] = ResultadoPagamento.Aprovado,
         ["cancelado"] = ResultadoPagamento.Cancelado,
     };
-
-    private bool AssinaturaValida(byte[] corpo)
-    {
-        if (!Request.Headers.TryGetValue(CabecalhoAssinatura, out var recebida) || string.IsNullOrWhiteSpace(recebida))
-            return false;
-
-        var chave = Encoding.UTF8.GetBytes(opcoes.Value.SegredoWebhook);
-        var esperada = Convert.ToHexString(HMACSHA256.HashData(chave, corpo)).ToLowerInvariant();
-
-        // Comparação em tempo constante: não vaza, pelo tempo de resposta, quantos caracteres batem.
-        return CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(esperada),
-            Encoding.UTF8.GetBytes(recebida.ToString().Trim().ToLowerInvariant()));
-    }
 }
 
 public sealed class WebhookPagamentoRequest
