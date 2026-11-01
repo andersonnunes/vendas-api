@@ -21,6 +21,8 @@ public static class SegurancaExtensions
         services.AddAuthorizationBuilder()
             .AddPolicy(PoliticasAutorizacao.OperacaoComercial, politica =>
                 politica.RequireRole("administrador", "vendedor"))
+            .AddPolicy(PoliticasAutorizacao.Administrador, politica =>
+                politica.RequireRole("administrador"))
             .AddPolicy(PoliticasAutorizacao.ServicoVeiculosApi, politica =>
                 politica.RequireRole("servico").RequireClaim("azp", clienteChamador));
 

@@ -16,6 +16,7 @@ public static class InfrastructureExtensions
 
         services.AddScoped<IVeiculoCopiaRepositorio, EfVeiculoCopiaRepositorio>();
         services.AddScoped<IListagemVeiculosConsulta, EfListagemVeiculosConsulta>();
+        services.AddScoped<IListagemVendidosConsulta, EfListagemVendidosConsulta>();
 
         return services;
     }
