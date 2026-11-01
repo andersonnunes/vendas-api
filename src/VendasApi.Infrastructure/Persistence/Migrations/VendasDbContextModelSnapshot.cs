@@ -77,6 +77,9 @@ namespace VendasApi.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ux_veiculos_copia_placa")
                         .HasFilter("\"Placa\" IS NOT NULL");
 
+                    b.HasIndex("Status", "Preco", "Id")
+                        .HasDatabaseName("ix_veiculos_copia_status_preco_id");
+
                     b.ToTable("veiculos_copia", (string)null);
                 });
 #pragma warning restore 612, 618

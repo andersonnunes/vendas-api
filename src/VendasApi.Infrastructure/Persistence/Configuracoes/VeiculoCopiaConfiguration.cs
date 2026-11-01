@@ -30,5 +30,9 @@ internal sealed class VeiculoCopiaConfiguration : IEntityTypeConfiguration<Veicu
             .IsUnique()
             .HasFilter("\"Placa\" IS NOT NULL")
             .HasDatabaseName("ux_veiculos_copia_placa");
+
+        // Atende o filtro por status e a ordenação por preço e id da listagem pública (US2.2).
+        builder.HasIndex(v => new { v.Status, v.Preco, v.Id })
+            .HasDatabaseName("ix_veiculos_copia_status_preco_id");
     }
 }
