@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using Scalar.AspNetCore;
 using VendasApi.Application.Veiculos;
 using VendasApi.Application.Veiculos.Listagem;
+using VendasApi.Application.Vendas;
 using VendasApi.Erros;
 using VendasApi.Infrastructure;
 using VendasApi.Infrastructure.Persistence;
@@ -21,6 +22,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosDisponiveisCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosVendidosCasoDeUso>();
+builder.Services.AddScoped<EfetuarVendaCasoDeUso>();
 
 var app = builder.Build();
 

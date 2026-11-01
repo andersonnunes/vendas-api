@@ -122,4 +122,13 @@ public class VeiculoCopiaTests
 
         Assert.Equal(StatusVeiculoCopia.Disponivel, copia.Status);
     }
+
+    [Fact]
+    public void Reservar_VeiculoJaReservado_LancaVeiculoIndisponivel()
+    {
+        var copia = VeiculoCopia.Criar(Dados(), AnoAtual);
+        copia.Reservar();
+
+        Assert.Throws<VeiculoIndisponivelParaVendaException>(() => copia.Reservar());
+    }
 }

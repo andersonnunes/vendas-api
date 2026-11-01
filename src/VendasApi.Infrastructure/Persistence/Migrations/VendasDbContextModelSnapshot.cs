@@ -82,6 +82,55 @@ namespace VendasApi.Infrastructure.Persistence.Migrations
 
                     b.ToTable("veiculos_copia", (string)null);
                 });
+
+            modelBuilder.Entity("VendasApi.Domain.Vendas.Venda", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoPagamento")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Cpf")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("DataVenda")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("VeiculoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodigoPagamento")
+                        .IsUnique()
+                        .HasDatabaseName("ux_vendas_codigo_pagamento");
+
+                    b.HasIndex("VeiculoId");
+
+                    b.ToTable("vendas", (string)null);
+                });
+
+            modelBuilder.Entity("VendasApi.Domain.Vendas.Venda", b =>
+                {
+                    b.HasOne("VendasApi.Domain.Veiculos.VeiculoCopia", null)
+                        .WithMany()
+                        .HasForeignKey("VeiculoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }
