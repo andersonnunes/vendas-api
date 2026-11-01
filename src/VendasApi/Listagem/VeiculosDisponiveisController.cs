@@ -15,7 +15,7 @@ public sealed class VeiculosDisponiveisController(ListarVeiculosDisponiveisCasoD
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Listar(
         [FromQuery] int pagina = 1,
-        [FromQuery] int tamanho = ListarVeiculosDisponiveisCasoDeUso.TamanhoPadrao,
+        [FromQuery] int tamanho = ValidacaoPaginacao.TamanhoPadrao,
         CancellationToken cancellationToken = default)
     {
         var resultado = await listar.ExecutarAsync(pagina, tamanho, cancellationToken);

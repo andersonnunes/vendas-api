@@ -20,6 +20,7 @@ builder.Services.AddExceptionHandler<ExcecoesDeNegocioHandler>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosDisponiveisCasoDeUso>();
+builder.Services.AddScoped<ListarVeiculosVendidosCasoDeUso>();
 
 var app = builder.Build();
 
