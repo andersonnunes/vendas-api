@@ -26,14 +26,17 @@ public sealed class WebhookPagamentosController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Receber(CancellationToken cancellationToken)
+    public async Task<IActionResult> Receber(
+        [FromHeader(Name = CabecalhoAssinatura)] string? assinatura,
+        CancellationToken cancellationToken)
     {
         // A assinatura é conferida sobre os bytes exatos recebidos, antes de qualquer desserialização.
         using var memoria = new MemoryStream();
-        await Request.Body.CopyToAsync(memoria, cancellationToken);
+        // A assinatura HMAC exige os bytes exatos do corpo, que o model binding não entrega.
+        await Request.Body.CopyToAsync(memoria, cancellationToken); // NOSONAR S6932
         var corpo = memoria.ToArray();
 
-        if (!verificador.Valida(Request.Headers[CabecalhoAssinatura], corpo))
+        if (!verificador.Valida(assinatura, corpo))
             return Unauthorized();
 
         WebhookPagamentoRequest? request;
