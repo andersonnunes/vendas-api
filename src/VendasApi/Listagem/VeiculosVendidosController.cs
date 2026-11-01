@@ -12,7 +12,7 @@ namespace VendasApi.Listagem;
 public sealed class VeiculosVendidosController(ListarVeiculosVendidosCasoDeUso listar) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<ListagemVendidosResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ListagemResponse<VeiculoVendidoResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -22,20 +22,9 @@ public sealed class VeiculosVendidosController(ListarVeiculosVendidosCasoDeUso l
         CancellationToken cancellationToken = default)
     {
         var resultado = await listar.ExecutarAsync(pagina, tamanho, cancellationToken);
-
-        return Ok(new ListagemVendidosResponse(
-            resultado.Itens.Select(VeiculoVendidoResponse.De).ToList(),
-            resultado.Pagina,
-            resultado.Tamanho,
-            resultado.Total));
+        return Ok(ListagemResponse<VeiculoVendidoResponse>.De(resultado, VeiculoVendidoResponse.De));
     }
 }
-
-public sealed record ListagemVendidosResponse(
-    IReadOnlyList<VeiculoVendidoResponse> Itens,
-    int Pagina,
-    int Tamanho,
-    int Total);
 
 public sealed record VeiculoVendidoResponse(
     Guid Id,

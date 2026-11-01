@@ -8,7 +8,7 @@ internal sealed class EfListagemVendidosConsulta(VendasDbContext contexto) : ILi
 {
     public Task<ResultadoPaginado<VeiculoVendidoDto>> ListarVendidosAsync(int pagina, int tamanho, CancellationToken cancellationToken) =>
         PaginacaoVeiculosCopia.PaginarAsync(
-            contexto.VeiculosCopia.AsNoTracking().Where(v => v.Status == StatusVeiculoCopia.Vendido),
+            contexto.VeiculosCopia.AsNoTracking().Where(VeiculoCopia.EstaVendido),
             pagina,
             tamanho,
             v => new VeiculoVendidoDto(v.Id, v.Marca, v.Modelo, v.Ano, v.Cor, v.Preco, v.Chassi, v.Placa),

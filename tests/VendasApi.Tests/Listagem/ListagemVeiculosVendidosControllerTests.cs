@@ -75,14 +75,15 @@ public sealed class ListagemVeiculosVendidosControllerTests(KeycloakFixture keyc
     public async Task Listar_RespostaTrazChassiEPlaca()
     {
         using var fabrica = new ApiComKeycloak(keycloak, postgres);
-        var id = await SemearAsync(fabrica, 0.01m, StatusVeiculoCopia.Vendido, placa: "ABC1D23");
+        var placa = Guid.NewGuid().ToString("N")[..7].ToUpperInvariant();
+        var id = await SemearAsync(fabrica, 0.01m, StatusVeiculoCopia.Vendido, placa: placa);
         var cliente = await ClienteAsync(fabrica, "admin-dev", "dev-admin");
 
         var itens = await ItensAsync(cliente, "tamanho=100");
 
         var item = itens.Single(i => i.GetProperty("id").GetGuid() == id);
         Assert.False(string.IsNullOrEmpty(item.GetProperty("chassi").GetString()));
-        Assert.Equal("ABC1D23", item.GetProperty("placa").GetString());
+        Assert.Equal(placa, item.GetProperty("placa").GetString());
     }
 
     [Fact]

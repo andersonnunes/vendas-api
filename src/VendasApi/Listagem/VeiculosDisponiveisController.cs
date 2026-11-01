@@ -11,7 +11,7 @@ namespace VendasApi.Listagem;
 public sealed class VeiculosDisponiveisController(ListarVeiculosDisponiveisCasoDeUso listar) : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType<ListagemVeiculosResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ListagemResponse<VeiculoListagemResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Listar(
         [FromQuery] int pagina = 1,
@@ -19,20 +19,9 @@ public sealed class VeiculosDisponiveisController(ListarVeiculosDisponiveisCasoD
         CancellationToken cancellationToken = default)
     {
         var resultado = await listar.ExecutarAsync(pagina, tamanho, cancellationToken);
-
-        return Ok(new ListagemVeiculosResponse(
-            resultado.Itens.Select(VeiculoListagemResponse.De).ToList(),
-            resultado.Pagina,
-            resultado.Tamanho,
-            resultado.Total));
+        return Ok(ListagemResponse<VeiculoListagemResponse>.De(resultado, VeiculoListagemResponse.De));
     }
 }
-
-public sealed record ListagemVeiculosResponse(
-    IReadOnlyList<VeiculoListagemResponse> Itens,
-    int Pagina,
-    int Tamanho,
-    int Total);
 
 public sealed record VeiculoListagemResponse(Guid Id, string Marca, string Modelo, int Ano, string Cor, decimal Preco)
 {

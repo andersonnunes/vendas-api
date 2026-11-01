@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 
 namespace VendasApi.Domain.Veiculos;
@@ -11,6 +12,14 @@ public sealed partial class VeiculoCopia
     private const int TamanhoMaximoCor = 30;
     private const int AnoMinimo = 1900;
     private const decimal PrecoMaximo = 9_999_999_999.99m;
+
+    /// <summary>Critério de "à venda" usado pelas consultas: só o domínio decide o que é disponível.</summary>
+    public static Expression<Func<VeiculoCopia, bool>> EstaDisponivelParaVenda =>
+        v => v.Status == StatusVeiculoCopia.Disponivel;
+
+    /// <summary>Critério de "vendido" usado pelas consultas administrativas.</summary>
+    public static Expression<Func<VeiculoCopia, bool>> EstaVendido =>
+        v => v.Status == StatusVeiculoCopia.Vendido;
 
     private VeiculoCopia()
     {
