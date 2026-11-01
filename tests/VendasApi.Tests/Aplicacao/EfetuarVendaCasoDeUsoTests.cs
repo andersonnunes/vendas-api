@@ -22,42 +22,61 @@ public class EfetuarVendaCasoDeUsoTests
     }
 
     [Fact]
-    public async Task ExecutarAsync_DadosValidos_RegistraAVendaEDevolveCpfMascarado()
+    public async Task ExecutarAsync_VeiculoDisponivel_ReservaAcopiaERegistraAVenda()
     {
-        var repositorio = new RepositorioFalso();
+        var copia = Copia();
+        var repositorio = new RepositorioFalso { Copia = copia };
         var casoDeUso = new EfetuarVendaCasoDeUso(repositorio, new FakeTimeProvider(Agora));
-        var veiculoId = Guid.NewGuid();
 
-        var dto = await casoDeUso.ExecutarAsync(new EntradaEfetuarVenda(veiculoId, "52998224725", new DateOnly(2026, 11, 2)), CancellationToken.None);
+        var dto = await casoDeUso.ExecutarAsync(new EntradaEfetuarVenda(copia.Id, "52998224725", new DateOnly(2026, 11, 2)), CancellationToken.None);
 
-        Assert.Equal(1, repositorio.Chamadas);
-        Assert.Equal(veiculoId, repositorio.UltimoVeiculoId);
+        Assert.Equal(StatusVeiculoCopia.Reservado, copia.Status);
+        Assert.Equal(1, repositorio.VendasRegistradas);
         Assert.Equal("***.982.247-**", dto.CpfMascarado);
         Assert.Equal("reservada", dto.Status);
     }
 
     [Fact]
-    public async Task ExecutarAsync_VeiculoIndisponivel_PropagaAoChamador()
+    public async Task ExecutarAsync_VeiculoNaoExiste_LancaVeiculoNaoEncontrado()
     {
-        var repositorio = new RepositorioFalso { Excecao = new VeiculoIndisponivelParaVendaException() };
+        var repositorio = new RepositorioFalso { Copia = null };
+        var casoDeUso = new EfetuarVendaCasoDeUso(repositorio, new FakeTimeProvider(Agora));
+
+        await Assert.ThrowsAsync<VeiculoNaoEncontradoException>(() =>
+            casoDeUso.ExecutarAsync(new EntradaEfetuarVenda(Guid.NewGuid(), "52998224725", new DateOnly(2026, 11, 2)), CancellationToken.None));
+
+        Assert.Equal(0, repositorio.VendasRegistradas);
+    }
+
+    [Fact]
+    public async Task ExecutarAsync_VeiculoJaReservado_PropagaSemRegistrarVenda()
+    {
+        var copia = Copia();
+        copia.Reservar();
+        var repositorio = new RepositorioFalso { Copia = copia };
         var casoDeUso = new EfetuarVendaCasoDeUso(repositorio, new FakeTimeProvider(Agora));
 
         await Assert.ThrowsAsync<VeiculoIndisponivelParaVendaException>(() =>
-            casoDeUso.ExecutarAsync(new EntradaEfetuarVenda(Guid.NewGuid(), "52998224725", new DateOnly(2026, 11, 2)), CancellationToken.None));
+            casoDeUso.ExecutarAsync(new EntradaEfetuarVenda(copia.Id, "52998224725", new DateOnly(2026, 11, 2)), CancellationToken.None));
+
+        Assert.Equal(0, repositorio.VendasRegistradas);
     }
+
+    private static VeiculoCopia Copia() => VeiculoCopia.Criar(
+        new DadosSnapshot(Guid.NewGuid(), "Toyota", "Corolla", 2024, "Prata", 100m, "9BWZZZ377VT004251", null, StatusVeiculoCopia.Disponivel, Agora),
+        Agora.Year);
 
     private sealed class RepositorioFalso : IVendasRepositorio
     {
+        public VeiculoCopia? Copia { get; init; }
         public int Chamadas { get; private set; }
-        public Guid UltimoVeiculoId { get; private set; }
-        public Exception? Excecao { get; init; }
+        public int VendasRegistradas { get; private set; }
 
-        public Task ReservarVeiculoERegistrarVendaAsync(Guid veiculoId, Venda venda, CancellationToken cancellationToken)
+        public Task EfetuarVendaAsync(Guid veiculoId, Func<VeiculoCopia?, Venda> efetuar, CancellationToken cancellationToken)
         {
             Chamadas++;
-            UltimoVeiculoId = veiculoId;
-            if (Excecao is not null)
-                throw Excecao;
+            efetuar(Copia);
+            VendasRegistradas++;
             return Task.CompletedTask;
         }
     }

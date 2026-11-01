@@ -19,7 +19,7 @@ public class VendaTests
 
         Assert.Equal(StatusVenda.Reservada, venda.Status);
         Assert.Equal(CpfValido, venda.Cpf);
-        Assert.Equal("***.982.247-**", venda.CpfMascarado);
+        Assert.Equal("***.982.247-**", VendasApi.Domain.Vendas.CpfValidacao.Mascarar(venda.Cpf));
     }
 
     [Theory]

@@ -7,7 +7,7 @@ namespace VendasApi.Infrastructure.Persistence;
 
 internal sealed class EfVendasRepositorio(VendasDbContext contexto) : IVendasRepositorio
 {
-    public async Task ReservarVeiculoERegistrarVendaAsync(Guid veiculoId, Venda venda, CancellationToken cancellationToken)
+    public async Task EfetuarVendaAsync(Guid veiculoId, Func<VeiculoCopia?, Venda> efetuar, CancellationToken cancellationToken)
     {
         // Sem commit explícito, o dispose da transação faz rollback: reserva e venda andam juntas ou não andam.
         await using var transacao = await contexto.Database.BeginTransactionAsync(cancellationToken);
@@ -16,10 +16,8 @@ internal sealed class EfVendasRepositorio(VendasDbContext contexto) : IVendasRep
         await contexto.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT 1 FROM veiculos_copia WHERE \"Id\" = {veiculoId} FOR UPDATE", cancellationToken);
 
-        var copia = await contexto.VeiculosCopia.FirstOrDefaultAsync(v => v.Id == veiculoId, cancellationToken)
-            ?? throw new VeiculoNaoEncontradoException(veiculoId);
-
-        copia.Reservar();
+        var copia = await contexto.VeiculosCopia.FirstOrDefaultAsync(v => v.Id == veiculoId, cancellationToken);
+        var venda = efetuar(copia);
         contexto.Vendas.Add(venda);
 
         await contexto.SaveChangesAsync(cancellationToken);

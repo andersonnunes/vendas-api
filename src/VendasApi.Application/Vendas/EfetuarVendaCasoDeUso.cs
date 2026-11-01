@@ -19,7 +19,14 @@ public sealed class EfetuarVendaCasoDeUso(IVendasRepositorio repositorio, TimePr
             Guid.NewGuid().ToString("N"),
             agora);
 
-        await repositorio.ReservarVeiculoERegistrarVendaAsync(entrada.VeiculoId, venda, cancellationToken);
+        await repositorio.EfetuarVendaAsync(entrada.VeiculoId, copia =>
+        {
+            if (copia is null)
+                throw new VeiculoNaoEncontradoException(entrada.VeiculoId);
+
+            copia.Reservar();
+            return venda;
+        }, cancellationToken);
 
         return VendaDto.De(venda);
     }

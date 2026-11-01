@@ -20,8 +20,6 @@ public sealed class Venda
     public string CodigoPagamento { get; private set; } = string.Empty;
     public DateTimeOffset CriadoEm { get; private set; }
 
-    public string CpfMascarado => CpfValidacao.Mascarar(Cpf);
-
     public static Venda Criar(
         Guid id,
         Guid veiculoId,

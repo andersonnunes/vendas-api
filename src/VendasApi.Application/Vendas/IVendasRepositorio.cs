@@ -1,3 +1,4 @@
+using VendasApi.Domain.Veiculos;
 using VendasApi.Domain.Vendas;
 
 namespace VendasApi.Application.Vendas;
@@ -5,10 +6,10 @@ namespace VendasApi.Application.Vendas;
 public interface IVendasRepositorio
 {
     /// <summary>
-    /// Reserva o veículo e registra a venda numa única operação atômica: a linha do veículo é travada,
-    /// a reserva é aplicada e a venda é gravada, ou nada é gravado.
+    /// Trava a cópia do veículo, entrega a cópia atual (ou null, se não existir) a <paramref name="efetuar"/>
+    /// e grava a venda que ele devolver, junto com a alteração da cópia. Tudo é confirmado ou nada é gravado.
+    /// Quem decide a regra é o caso de uso; o repositório só cuida da trava, da transação e da gravação.
     /// </summary>
-    /// <exception cref="VeiculoNaoEncontradoException">O veículo não existe na cópia local.</exception>
-    /// <exception cref="Domain.Veiculos.VeiculoIndisponivelParaVendaException">O veículo já está reservado ou vendido.</exception>
-    Task ReservarVeiculoERegistrarVendaAsync(Guid veiculoId, Venda venda, CancellationToken cancellationToken);
+    /// <exception cref="Application.Vendas.VeiculoNaoEncontradoException">Lançada por <paramref name="efetuar"/> quando a cópia é null.</exception>
+    Task EfetuarVendaAsync(Guid veiculoId, Func<VeiculoCopia?, Venda> efetuar, CancellationToken cancellationToken);
 }
