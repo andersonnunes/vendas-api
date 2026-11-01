@@ -1,3 +1,4 @@
+using VendasApi.Domain;
 using VendasApi.Domain.Vendas;
 
 namespace VendasApi.Tests.Dominio;
@@ -56,5 +57,78 @@ public class VendaTests
         var venda = Criar(dataVenda: Hoje.AddDays(-30));
 
         Assert.Equal(Hoje.AddDays(-30), venda.DataVenda);
+    }
+
+    [Fact]
+    public void Concluir_VendaReservada_MudaParaConcluida()
+    {
+        var venda = Criar();
+
+        venda.Concluir();
+
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
+
+    [Fact]
+    public void Cancelar_VendaReservada_MudaParaCancelada()
+    {
+        var venda = Criar();
+
+        venda.Cancelar();
+
+        Assert.Equal(StatusVenda.Cancelada, venda.Status);
+    }
+
+    [Fact]
+    public void Concluir_VendaJaConcluida_LancaTransicaoInvalida()
+    {
+        var venda = Criar();
+        venda.Concluir();
+
+        Assert.Throws<TransicaoInvalidaException>(() => venda.Cancelar());
+    }
+
+    [Fact]
+    public void AplicarPagamento_AprovadoEmVendaReservada_ConcluiEDevolveConcluida()
+    {
+        var venda = Criar();
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Equal(DesfechoPagamento.Concluida, desfecho);
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_CanceladoEmVendaReservada_CancelaEDevolveCancelada()
+    {
+        var venda = Criar();
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Cancelado);
+
+        Assert.Equal(DesfechoPagamento.Cancelada, desfecho);
+        Assert.Equal(StatusVenda.Cancelada, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_RepetindoOResultadoAplicado_EIdempotente()
+    {
+        var venda = Criar();
+        venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        var desfecho = venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Equal(DesfechoPagamento.JaAplicado, desfecho);
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
+    }
+
+    [Fact]
+    public void AplicarPagamento_ResultadoContrarioAoEstado_LancaTransicaoInvalida()
+    {
+        var venda = Criar();
+        venda.AplicarPagamento(ResultadoPagamento.Aprovado);
+
+        Assert.Throws<TransicaoInvalidaException>(() => venda.AplicarPagamento(ResultadoPagamento.Cancelado));
+        Assert.Equal(StatusVenda.Concluida, venda.Status);
     }
 }

@@ -1,3 +1,4 @@
+using VendasApi.Domain;
 using VendasApi.Domain.Veiculos;
 
 namespace VendasApi.Tests.Dominio;
@@ -130,5 +131,35 @@ public class VeiculoCopiaTests
         copia.Reservar();
 
         Assert.Throws<VeiculoIndisponivelParaVendaException>(() => copia.Reservar());
+    }
+
+    [Fact]
+    public void MarcarVendido_VeiculoReservado_MudaParaVendido()
+    {
+        var copia = VeiculoCopia.Criar(Dados(), AnoAtual);
+        copia.Reservar();
+
+        copia.MarcarVendido();
+
+        Assert.Equal(StatusVeiculoCopia.Vendido, copia.Status);
+    }
+
+    [Fact]
+    public void Liberar_VeiculoReservado_VoltaParaDisponivel()
+    {
+        var copia = VeiculoCopia.Criar(Dados(), AnoAtual);
+        copia.Reservar();
+
+        copia.Liberar();
+
+        Assert.Equal(StatusVeiculoCopia.Disponivel, copia.Status);
+    }
+
+    [Fact]
+    public void MarcarVendido_VeiculoDisponivel_LancaTransicaoInvalida()
+    {
+        var copia = VeiculoCopia.Criar(Dados(), AnoAtual);
+
+        Assert.Throws<TransicaoInvalidaException>(() => copia.MarcarVendido());
     }
 }

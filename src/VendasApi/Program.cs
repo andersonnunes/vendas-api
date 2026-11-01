@@ -3,7 +3,10 @@ using System.Runtime.CompilerServices;
 using Scalar.AspNetCore;
 using VendasApi.Application.Veiculos;
 using VendasApi.Application.Veiculos.Listagem;
+using VendasApi.Application.Pagamentos;
 using VendasApi.Application.Vendas;
+using VendasApi.Integracao;
+using VendasApi.Pagamentos;
 using VendasApi.Erros;
 using VendasApi.Infrastructure;
 using VendasApi.Infrastructure.Persistence;
@@ -23,6 +26,13 @@ builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosDisponiveisCasoDeUso>();
 builder.Services.AddScoped<ListarVeiculosVendidosCasoDeUso>();
 builder.Services.AddScoped<EfetuarVendaCasoDeUso>();
+builder.Services.AddScoped<ProcessarResultadoPagamentoCasoDeUso>();
+builder.Services.AddSingleton<AssinaturaWebhookVerificador>();
+builder.Services.AddOptions<PagamentosOptions>()
+    .Bind(builder.Configuration.GetSection(PagamentosOptions.Secao))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddIntegracaoVeiculosApi(builder.Configuration);
 
 var app = builder.Build();
 
