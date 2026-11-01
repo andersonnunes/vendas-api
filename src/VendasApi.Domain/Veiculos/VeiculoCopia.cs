@@ -83,6 +83,24 @@ public sealed partial class VeiculoCopia
     /// Marca o veículo como reservado durante uma venda em andamento (US2.4). Ainda sem caminho de negócio
     /// nesta história; existe para que a regra de precedência da reserva seja testada pelo domínio.
     /// </summary>
+    /// <summary>Pagamento da venda confirmado: o veículo reservado passa a vendido.</summary>
+    public void MarcarVendido()
+    {
+        if (Status != StatusVeiculoCopia.Reservado)
+            throw new TransicaoInvalidaException("Só um veículo reservado pode ser marcado como vendido.");
+
+        Status = StatusVeiculoCopia.Vendido;
+    }
+
+    /// <summary>Pagamento cancelado: o veículo reservado volta a disponível.</summary>
+    public void Liberar()
+    {
+        if (Status != StatusVeiculoCopia.Reservado)
+            throw new TransicaoInvalidaException("Só um veículo reservado pode ser liberado.");
+
+        Status = StatusVeiculoCopia.Disponivel;
+    }
+
     public void Reservar()
     {
         if (Status != StatusVeiculoCopia.Disponivel)

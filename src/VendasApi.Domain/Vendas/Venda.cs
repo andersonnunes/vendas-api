@@ -20,6 +20,24 @@ public sealed class Venda
     public string CodigoPagamento { get; private set; } = string.Empty;
     public DateTimeOffset CriadoEm { get; private set; }
 
+    /// <summary>Pagamento confirmado: a reserva vira venda concluída.</summary>
+    public void Concluir()
+    {
+        if (Status != StatusVenda.Reservada)
+            throw new TransicaoInvalidaException($"Uma venda {Status.ToString().ToLowerInvariant()} não pode ser concluída.");
+
+        Status = StatusVenda.Concluida;
+    }
+
+    /// <summary>Pagamento cancelado: a reserva é desfeita.</summary>
+    public void Cancelar()
+    {
+        if (Status != StatusVenda.Reservada)
+            throw new TransicaoInvalidaException($"Uma venda {Status.ToString().ToLowerInvariant()} não pode ser cancelada.");
+
+        Status = StatusVenda.Cancelada;
+    }
+
     public static Venda Criar(
         Guid id,
         Guid veiculoId,

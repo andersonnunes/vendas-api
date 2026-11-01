@@ -17,6 +17,9 @@ public sealed class ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture pos
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:VendasDb", postgres.ConnectionString);
+        // Segredo de teste do webhook e veiculos-api inalcançável: a notificação falha de forma determinística.
+        builder.UseSetting("Pagamentos:SegredoWebhook", "segredo-de-teste");
+        builder.UseSetting("VeiculosApi:BaseUrl", "http://localhost:9");
         builder.UseSetting("Keycloak:EmissorPublico", keycloak.EmissorRealm);
         builder.UseSetting("Keycloak:MetadataInterna", keycloak.MetadataRealm);
         builder.UseSetting("Keycloak:EndpointToken", keycloak.EndpointToken);
