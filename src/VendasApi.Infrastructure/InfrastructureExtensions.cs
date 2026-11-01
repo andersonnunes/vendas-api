@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using VendasApi.Application.Veiculos;
 using VendasApi.Application.Veiculos.Listagem;
+using VendasApi.Application.Vendas;
 using VendasApi.Infrastructure.Persistence;
 
 namespace VendasApi.Infrastructure;
@@ -17,6 +18,7 @@ public static class InfrastructureExtensions
         services.AddScoped<IVeiculoCopiaRepositorio, EfVeiculoCopiaRepositorio>();
         services.AddScoped<IListagemVeiculosConsulta, EfListagemVeiculosConsulta>();
         services.AddScoped<IListagemVendidosConsulta, EfListagemVendidosConsulta>();
+        services.AddScoped<IVendasRepositorio, EfVendasRepositorio>();
 
         return services;
     }

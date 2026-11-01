@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using VendasApi.Application.Veiculos;
 using VendasApi.Application.Veiculos.Listagem;
+using VendasApi.Application.Vendas;
 using VendasApi.Domain.Veiculos;
+using VendasApi.Domain.Vendas;
 
 namespace VendasApi.Erros;
 
@@ -25,6 +27,17 @@ internal sealed class ExcecoesDeNegocioHandler : IExceptionHandler
                 }),
             ParametrosPaginacaoInvalidosException paginacao => Results.ValidationProblem(
                 new Dictionary<string, string[]> { ["paginacao"] = [paginacao.Message] }),
+            VendaInvalidaException venda => Results.ValidationProblem(
+                venda.Erros.ToDictionary(par => par.Key, par => par.Value)),
+            VeiculoNaoEncontradoException => Results.Problem(
+                title: "Veículo não encontrado",
+                detail: "O veículo informado não existe na cópia local.",
+                statusCode: StatusCodes.Status404NotFound),
+            VeiculoIndisponivelParaVendaException => Results.Problem(
+                title: "Veículo indisponível",
+                detail: "Só um veículo disponível pode ser vendido.",
+                statusCode: StatusCodes.Status409Conflict,
+                extensions: new Dictionary<string, object?> { ["codigo"] = "veiculo_indisponivel" }),
             ConcorrenciaCopiaVeiculoException => Results.Problem(
                 title: "Conflito de sincronização",
                 detail: "A cópia do veículo foi alterada por outra operação. Tente novamente.",

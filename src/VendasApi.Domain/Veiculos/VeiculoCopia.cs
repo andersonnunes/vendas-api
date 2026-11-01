@@ -86,7 +86,7 @@ public sealed partial class VeiculoCopia
     public void Reservar()
     {
         if (Status != StatusVeiculoCopia.Disponivel)
-            throw new InvalidOperationException("Só um veículo disponível pode ser reservado.");
+            throw new VeiculoIndisponivelParaVendaException();
 
         Status = StatusVeiculoCopia.Reservado;
     }
