@@ -71,9 +71,3 @@ public sealed class KeycloakFixture : IAsyncLifetime
 
     private sealed record RespostaToken([property: JsonPropertyName("access_token")] string AccessToken);
 }
-
-[CollectionDefinition(NomeColecao)]
-public sealed class KeycloakCollection : ICollectionFixture<KeycloakFixture>
-{
-    public const string NomeColecao = "keycloak";
-}

@@ -1,14 +1,17 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
+using VendasApi.Tests.Infraestrutura;
+using VendasApi.Tests.Seguranca;
 
 namespace VendasApi.Tests;
 
-public class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+[Collection(AmbienteCollection.NomeColecao)]
+public class HealthEndpointTests(KeycloakFixture keycloak, PostgresFixture postgres)
 {
     [Fact]
     public async Task Health_RetornaOk()
     {
-        var client = factory.CreateClient();
+        using var fabrica = new ApiComKeycloak(keycloak, postgres);
+        var client = fabrica.CreateClient();
 
         var response = await client.GetAsync("/health");
 
