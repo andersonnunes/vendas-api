@@ -23,7 +23,7 @@ public class AplicarSnapshotVeiculoCasoDeUsoTests
 
         var copia = Assert.Single(repositorio.Copias);
         Assert.Equal(Id, copia.Id);
-        Assert.Equal(1, repositorio.SalvarChamadas);
+        Assert.Equal(1, repositorio.AplicarChamadas);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class AplicarSnapshotVeiculoCasoDeUsoTests
         await casoDeUso.ExecutarAsync(Dados(), CancellationToken.None);
 
         Assert.Single(repositorio.Copias);
-        Assert.Equal(2, repositorio.SalvarChamadas);
+        Assert.Equal(2, repositorio.AplicarChamadas);
     }
 
     [Fact]
@@ -69,37 +69,29 @@ public class AplicarSnapshotVeiculoCasoDeUsoTests
         await Assert.ThrowsAsync<SnapshotInvalidoException>(() =>
             casoDeUso.ExecutarAsync(Dados() with { Chassi = "CURTO" }, CancellationToken.None));
 
-        Assert.Equal(0, repositorio.ObterChamadas);
+        Assert.Equal(0, repositorio.AplicarChamadas);
     }
 
     private sealed class RepositorioEmMemoria : IVeiculoCopiaRepositorio
     {
         public List<VeiculoCopia> Copias { get; } = [];
         public int ConflitosParaSimular { get; set; }
-        public int SalvarChamadas { get; private set; }
-        public int ObterChamadas { get; private set; }
+        public int AplicarChamadas { get; private set; }
 
-        public Task<VeiculoCopia?> ObterParaAtualizacaoAsync(Guid id, CancellationToken cancellationToken)
+        public Task AplicarAsync(Guid id, Func<VeiculoCopia?, VeiculoCopia> aplicar, CancellationToken cancellationToken)
         {
-            ObterChamadas++;
-            return Task.FromResult(Copias.FirstOrDefault(c => c.Id == id));
-        }
+            AplicarChamadas++;
+            var existente = Copias.FirstOrDefault(c => c.Id == id);
+            var resultado = aplicar(existente);
 
-        public Task AdicionarAsync(VeiculoCopia copia, CancellationToken cancellationToken)
-        {
-            Copias.Add(copia);
-            return Task.CompletedTask;
-        }
-
-        public Task SalvarAsync(CancellationToken cancellationToken)
-        {
-            SalvarChamadas++;
             if (ConflitosParaSimular > 0)
             {
                 ConflitosParaSimular--;
-                Copias.Clear();
                 throw new ConcorrenciaCopiaVeiculoException();
             }
+
+            if (existente is null)
+                Copias.Add(resultado);
             return Task.CompletedTask;
         }
     }

@@ -5,15 +5,11 @@ namespace VendasApi.Application.Veiculos;
 public interface IVeiculoCopiaRepositorio
 {
     /// <summary>
-    /// Trava a cópia para atualização (se existir) e inicia a unidade de trabalho. Retorna null quando
-    /// ainda não existe; nesse caso o chamador deve usar <see cref="AdicionarAsync"/>.
+    /// Aplica uma alteração à cópia do veículo em uma única operação atômica. A implementação trava a
+    /// cópia existente, entrega ao <paramref name="aplicar"/> a cópia atual (ou null, se não existir) e
+    /// grava o resultado que ele devolver, confirmando tudo junto ou nada.
     /// </summary>
-    Task<VeiculoCopia?> ObterParaAtualizacaoAsync(Guid id, CancellationToken cancellationToken);
-
-    Task AdicionarAsync(VeiculoCopia copia, CancellationToken cancellationToken);
-
-    /// <summary>Confirma a unidade de trabalho iniciada por <see cref="ObterParaAtualizacaoAsync"/>.</summary>
     /// <exception cref="ConcorrenciaCopiaVeiculoException">Outro envio criou o mesmo veículo ao mesmo tempo.</exception>
     /// <exception cref="SnapshotVeiculoDuplicadoException">Chassi ou placa já usados por outro veículo.</exception>
-    Task SalvarAsync(CancellationToken cancellationToken);
+    Task AplicarAsync(Guid id, Func<VeiculoCopia?, VeiculoCopia> aplicar, CancellationToken cancellationToken);
 }

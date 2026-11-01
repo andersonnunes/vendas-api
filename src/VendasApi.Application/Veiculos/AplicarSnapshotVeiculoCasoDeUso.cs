@@ -16,7 +16,7 @@ public sealed class AplicarSnapshotVeiculoCasoDeUso(IVeiculoCopiaRepositorio rep
         {
             try
             {
-                await AplicarAsync(dados, anoAtual, cancellationToken);
+                await repositorio.AplicarAsync(dados.Id, copia => Aplicar(copia, dados, anoAtual), cancellationToken);
                 return;
             }
             catch (ConcorrenciaCopiaVeiculoException) when (tentativa < TentativasMaximas)
@@ -26,14 +26,12 @@ public sealed class AplicarSnapshotVeiculoCasoDeUso(IVeiculoCopiaRepositorio rep
         }
     }
 
-    private async Task AplicarAsync(DadosSnapshot dados, int anoAtual, CancellationToken cancellationToken)
+    private static VeiculoCopia Aplicar(VeiculoCopia? copia, DadosSnapshot dados, int anoAtual)
     {
-        var copia = await repositorio.ObterParaAtualizacaoAsync(dados.Id, cancellationToken);
         if (copia is null)
-            await repositorio.AdicionarAsync(VeiculoCopia.Criar(dados, anoAtual), cancellationToken);
-        else
-            copia.AplicarSnapshot(dados, anoAtual);
+            return VeiculoCopia.Criar(dados, anoAtual);
 
-        await repositorio.SalvarAsync(cancellationToken);
+        copia.AplicarSnapshot(dados, anoAtual);
+        return copia;
     }
 }
