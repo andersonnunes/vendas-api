@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+# Por padrão, o token não pode escrever nada. Cada job pede só o que precisa.
+permissions:
+  contents: read
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -54,3 +58,116 @@ jobs:
           image-ref: vendas-api:ci
           severity: HIGH,CRITICAL
           exit-code: "1"
+
+  # Roda em todo PR e em todo push: renderiza o kustomize e valida o schema dos objetos.
+  # Não publica nada e não recebe segredos.
+  validar-manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Renderizar manifests (kustomize)
+        run: kubectl kustomize deploy/k8s > manifests.yaml
+
+      - name: Validar schema (kubeconform)
+        run: >
+          docker run --rm -v "$PWD:/w" -w /w ghcr.io/yannh/kubeconform:v0.6.7
+          -strict -summary -kubernetes-version 1.27.0 manifests.yaml
+
+  # Só no merge na main, depois que todas as validações passaram. Publica a imagem no GHCR e
+  # expõe o digest para o job de deploy usar.
+  publicar-imagem:
+    if: github.event_name == 'push'
+    needs: [build-test, validar-manifests]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/VendasApi/Dockerfile
+          push: true
+          tags: ghcr.io/andersonnunes/vendas-api:${{ github.sha }}
+
+  # Deploy no kind efêmero deste job. Usa o digest publicado, nunca a tag. O cluster é descartado
+  # quando o job termina, porque o runner é novo a cada execução.
+  deploy:
+    if: github.event_name == 'push'
+    needs: [publicar-imagem]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-vendas-api
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Criar cluster kind
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: vendas-cd
+          config: deploy/kind/cluster.yaml
+          wait: 120s
+
+      - name: Apontar a imagem para o digest publicado
+        run: |
+          yq -i '.images[0].newName = "ghcr.io/andersonnunes/vendas-api"' deploy/k8s/kustomization.yaml
+          yq -i 'del(.images[0].newTag)' deploy/k8s/kustomization.yaml
+          yq -i '.images[0].digest = "${{ needs.publicar-imagem.outputs.digest }}"' deploy/k8s/kustomization.yaml
+
+      # O pacote no GHCR é privado por padrão. O segredo usa o GITHUB_TOKEN do próprio job e
+      # precisa existir antes do apply, para o primeiro pod já conseguir puxar a imagem.
+      - name: Criar namespace e segredo de pull do GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          kubectl create namespace vendas --dry-run=client -o yaml | kubectl apply -f -
+          kubectl -n vendas create secret docker-registry ghcr \
+            --docker-server=ghcr.io \
+            --docker-username="${{ github.actor }}" \
+            --docker-password="$GH_TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Aplicar manifests
+        run: kubectl apply -k deploy/k8s
+
+      - name: Anexar o segredo de pull ao Deployment
+        run: |
+          kubectl -n vendas patch deployment vendas-api \
+            -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"ghcr"}]}}}}'
+
+      - name: Esperar rollout
+        run: kubectl -n vendas rollout status deployment/vendas-api --timeout=300s
+
+      - name: Smoke test em /health
+        run: |
+          kubectl -n vendas port-forward svc/vendas-api 18080:8080 > pf.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:18080/health | grep -q '"status":"healthy"'; then
+              echo "health ok"; exit 0
+            fi
+            sleep 2
+          done
+          echo "health não respondeu"; cat pf.log; exit 1
+
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          kubectl -n vendas get pods -o wide || true
+          kubectl -n vendas describe deployment vendas-api || true
+          kubectl -n vendas logs deployment/vendas-api --tail=200 || true
+          kubectl -n vendas get events --sort-by=.lastTimestamp || true
