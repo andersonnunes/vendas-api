@@ -40,6 +40,8 @@ Quando a venda é concluída ou cancelada, o `vendas-api` atualiza a cópia loca
 listagem de vendidos é só para `administrador`. A rota interna de snapshot aceita só o serviço
 `veiculos-api`, com papel `servico`.
 
+A modelagem de dados (entidades, status, chaves, índices, regra do snapshot e a comunicação com a `veiculos-api`) está em [docs/modelagem.md](docs/modelagem.md).
+
 ## Endpoints
 
 | Método | Rota | Quem chama | Respostas |
@@ -219,6 +221,7 @@ vendas-api/
 │   ├── VendasApi.Infrastructure/   # EF Core, migrações, consultas, clientes HTTP, assinatura
 │   └── VendasApi/                  # API: controllers, autorização, Program.cs, Dockerfile
 ├── tests/VendasApi.Tests/          # testes de domínio, aplicação e integração (xUnit)
+├── docs/modelagem.md               # modelagem de dados e fluxos entre os serviços
 ├── infra/docker-compose.yml        # serviço e PostgreSQL (Keycloak fica no veiculos-api)
 └── .github/workflows/ci.yml        # build, lint, testes com cobertura ≥80% e scan de imagem
 ```
