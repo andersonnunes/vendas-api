@@ -20,6 +20,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSegurancaKeycloak(builder.Configuration);
 builder.Services.AddProblemDetails();
+// Origens do front vêm da configuração (Cors:OrigensPermitidas). Sem origem configurada, nenhuma é permitida.
+builder.Services.AddCors(opcoes => opcoes.AddDefaultPolicy(politica => politica
+    .WithOrigins(builder.Configuration.GetSection("Cors:OrigensPermitidas").Get<string[]>() ?? [])
+    .AllowAnyHeader()
+    .WithMethods("GET", "POST", "PUT")));
 builder.Services.AddExceptionHandler<ExcecoesDeNegocioHandler>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<AplicarSnapshotVeiculoCasoDeUso>();
@@ -47,6 +52,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
