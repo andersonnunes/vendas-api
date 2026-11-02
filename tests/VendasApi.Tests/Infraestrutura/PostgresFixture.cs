@@ -8,7 +8,6 @@ public sealed class PostgresFixture : IAsyncLifetime
         .WithDatabase("vendas")
         .WithUsername("vendas")
         .WithPassword("vendas")
-        .WithReuse(true)
         .Build();
 
     public string ConnectionString => _container.GetConnectionString();
