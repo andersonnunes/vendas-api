@@ -41,6 +41,24 @@ jobs:
           /p:ExcludeByFile="**/obj/**/*.cs"
           /p:Threshold=80 /p:ThresholdType=line /p:ThresholdStat=total
 
+      # Relatório de cobertura: HTML completo como artefato e resumo na página da execução.
+      # Versão do ReportGenerator fixada; instalada em pasta temporária, sem mexer no PATH.
+      - name: Gerar relatório de cobertura
+        run: |
+          dotnet tool install --tool-path "$RUNNER_TEMP/reportgenerator" dotnet-reportgenerator-globaltool --version 5.4.1
+          "$RUNNER_TEMP/reportgenerator/reportgenerator" \
+            -reports:tests/VendasApi.Tests/coverage.cobertura.xml \
+            -targetdir:cobertura-relatorio \
+            -reporttypes:"Html;MarkdownSummaryGithub"
+          cat cobertura-relatorio/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar relatório de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-vendas-api
+          path: cobertura-relatorio/
+          retention-days: 14
+
       # O realm do Keycloak é duplicado nos dois repositórios (cada um sobe sozinho) — esta
       # checagem falha se a cópia deste repositório divergir da do outro.
       - name: Checar divergência do realm com veiculos-api
