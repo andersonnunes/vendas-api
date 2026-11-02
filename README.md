@@ -94,8 +94,8 @@ Valores de desenvolvimento, já presentes em `appsettings.Development.json`. Nã
 | Chave | Padrão de dev | Para que serve |
 |---|---|---|
 | `ConnectionStrings:VendasDb` | sem padrão | PostgreSQL deste serviço. Informar por variável de ambiente. |
-| `Keycloak:EmissorPublico` | `http://localhost:8280/realms/revendax` | Emissor aceito nos tokens |
-| `Keycloak:EndpointToken` | `http://localhost:8280/.../token` | Obter token de serviço para chamar o `veiculos-api` |
+| `Keycloak:EmissorPublico` | `http://localhost:8180/realms/revendax` | Emissor aceito nos tokens (o Keycloak do `veiculos-api`) |
+| `Keycloak:EndpointToken` | `http://localhost:8180/.../token` | Obter token de serviço para chamar o `veiculos-api` |
 | `Pagamentos:SegredoWebhook` | `dev-webhook-secret` | Segredo do HMAC do webhook. **Obrigatório** para iniciar. |
 | `VeiculosApi:BaseUrl` | `http://localhost:5001` | Endereço do `veiculos-api`. **Obrigatório** para iniciar. |
 
@@ -103,14 +103,15 @@ Valores de desenvolvimento, já presentes em `appsettings.Development.json`. Nã
 
 ### Dependências do serviço
 
-PostgreSQL e Keycloak sobem pelo compose deste repositório, com o realm `revendax` já importado:
+O PostgreSQL sobe pelo compose deste repositório. O Keycloak **não** é deste repositório: os tokens
+são emitidos pelo Keycloak do `veiculos-api` (`http://localhost:8180`, realm `revendax`). Suba-o
+antes, pelo compose daquele repositório.
 
 ```bash
-docker compose -f infra/docker-compose.yml up -d vendas-db keycloak keycloak-db
+docker compose -f infra/docker-compose.yml up -d vendas-db
 ```
 
 - PostgreSQL: `localhost:5434`.
-- Keycloak: `http://localhost:8280`.
 
 ### Rodando o serviço
 
@@ -132,8 +133,8 @@ curl http://localhost:5002/health
 
 Em `Development`, a documentação interativa (Scalar) fica em `http://localhost:5002/scalar`.
 
-**Observação:** o compose deste repositório sobe o serviço `vendas-api` como container, mas o
-`vendas-api` precisa do `veiculos-api` para receber veículos. Sem ele, a listagem fica vazia.
+**Observação:** sem o `veiculos-api` de pé, a listagem fica vazia, porque os veículos chegam por ele.
+Para o fluxo completo, veja **Rodando junto com o `veiculos-api`**.
 
 ### Usuários e tokens de desenvolvimento
 
@@ -143,7 +144,7 @@ Credenciais de dev, não são de produção.
 # Token de vendedor (usuário vendedor-dev / dev-vendedor)
 curl -s -d grant_type=password -d client_id=revendax-dev-cli \
   -d username=vendedor-dev -d password=dev-vendedor \
-  http://localhost:8280/realms/revendax/protocol/openid-connect/token
+  http://localhost:8180/realms/revendax/protocol/openid-connect/token
 ```
 
 ### Exemplo: listar veículos à venda
@@ -157,7 +158,7 @@ curl "http://localhost:5002/veiculos?pagina=1&tamanho=20"
 ```bash
 TOKEN=$(curl -s -d grant_type=password -d client_id=revendax-dev-cli \
   -d username=vendedor-dev -d password=dev-vendedor \
-  http://localhost:8280/realms/revendax/protocol/openid-connect/token | jq -r .access_token)
+  http://localhost:8180/realms/revendax/protocol/openid-connect/token | jq -r .access_token)
 
 curl -i -X POST http://localhost:5002/vendas \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
@@ -179,10 +180,14 @@ curl -i -X POST http://localhost:5002/webhooks/pagamentos \
 
 ## Rodando junto com o `veiculos-api`
 
-Os dois serviços se comunicam por HTTP. Para o fluxo completo (cadastro, venda e confirmação),
-suba as dependências deste serviço e o `veiculos-api` com a configuração descrita no README dele,
-em **Rodando junto com o `vendas-api`**. Com a configuração padrão, cada serviço valida tokens em
-um Keycloak diferente, e a sincronização falha com `401`.
+Os dois serviços se comunicam por HTTP e usam **um único Keycloak**, o do `veiculos-api`. Para o
+fluxo completo (cadastro, venda e confirmação):
+
+1. Suba o `veiculos-api` pelo compose dele (inclui o Keycloak).
+2. Suba este serviço pelo compose deste repositório: `docker compose -f infra/docker-compose.yml up --build`.
+
+O compose deste serviço já aponta para o Keycloak e para o `veiculos-api` pela máquina
+(`host.docker.internal`), então não é preciso configurar nada a mais.
 
 ## Como testar
 
@@ -214,7 +219,7 @@ vendas-api/
 │   ├── VendasApi.Infrastructure/   # EF Core, migrações, consultas, clientes HTTP, assinatura
 │   └── VendasApi/                  # API: controllers, autorização, Program.cs, Dockerfile
 ├── tests/VendasApi.Tests/          # testes de domínio, aplicação e integração (xUnit)
-├── infra/docker-compose.yml        # serviço, PostgreSQL e Keycloak
+├── infra/docker-compose.yml        # serviço e PostgreSQL (Keycloak fica no veiculos-api)
 └── .github/workflows/ci.yml        # build, lint, testes com cobertura ≥80% e scan de imagem
 ```
 
@@ -229,8 +234,8 @@ vendas-api/
   produção. A resposta da API já mascara o CPF.
 - **Assinatura do webhook provisória.** O esquema (HMAC-SHA256 em `X-Assinatura`) vale até que o
   provedor de pagamento seja definido.
-- **Keycloak separado do `veiculos-api`.** Com a configuração padrão, a sincronização falha com `401`
-  (ver Rodando junto com o `veiculos-api`).
+- **Depende do Keycloak do `veiculos-api`.** Os tokens só são aceitos se esse Keycloak estiver de
+  pé em `localhost:8180`.
 
 ## CI/CD
 
