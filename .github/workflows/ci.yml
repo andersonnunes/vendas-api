@@ -5,6 +5,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Disparo manual (aba Actions ou `gh workflow run`), para testar a publicação e o deploy
+  # sem precisar de merge. Só quem tem permissão de escrita no repositório consegue disparar.
+  workflow_dispatch:
 
 # Por padrão, o token não pode escrever nada. Cada job pede só o que precisa.
 permissions:
@@ -77,7 +80,7 @@ jobs:
   # Só no merge na main, depois que todas as validações passaram. Publica a imagem no GHCR e
   # expõe o digest para o job de deploy usar.
   publicar-imagem:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: [build-test, validar-manifests]
     runs-on: ubuntu-latest
     permissions:
@@ -105,7 +108,7 @@ jobs:
   # Deploy no kind efêmero deste job. Usa o digest publicado, nunca a tag. O cluster é descartado
   # quando o job termina, porque o runner é novo a cada execução.
   deploy:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: [publicar-imagem]
     runs-on: ubuntu-latest
     permissions:
