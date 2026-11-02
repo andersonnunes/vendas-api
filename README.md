@@ -270,4 +270,5 @@ O workflow `.github/workflows/ci.yml` tem quatro jobs:
 - **`deploy`** (só merge em `main`): cria um `kind` efêmero, aponta a imagem para o digest, aplica
   `deploy/k8s`, espera o rollout e faz smoke test em `/health`.
 
-**Estado:** o workflow está escrito e validado localmente, mas ainda não rodou no GitHub.
+**Estado:** o workflow rodou no GitHub com sucesso (execução manual via `workflow_dispatch`): as quatro
+jobs passaram, incluindo a publicação no GHCR e o deploy no `kind` com smoke test em `/health`.
