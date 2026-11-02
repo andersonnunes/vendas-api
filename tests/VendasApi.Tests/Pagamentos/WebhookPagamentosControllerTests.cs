@@ -146,6 +146,62 @@ public sealed class WebhookPagamentosControllerTests(KeycloakFixture keycloak, P
         Assert.Equal(StatusVenda.Concluida, await StatusVendaAsync(fabrica, codigo));
     }
 
+    [Fact]
+    public async Task Receber_AprovadoECanceladoSimultaneos_SoUmResultadoEAplicado()
+    {
+        using var fabrica = new ApiComNotificadorEspiao(keycloak, postgres);
+        var codigo = NovoCodigo();
+        var veiculo = await SemearVendaReservadaAsync(fabrica, codigo);
+        var cliente = fabrica.CreateClient();
+        var aprovado = Corpo(codigo, "aprovado");
+        var cancelado = Corpo(codigo, "cancelado");
+
+        var respostas = await Task.WhenAll(
+            Enviar(cliente, aprovado, Assinar(aprovado)),
+            Enviar(cliente, cancelado, Assinar(cancelado)));
+
+        // Um resultado vence e o outro é recusado como transição inválida: nunca os dois efeitos juntos.
+        var codigos = respostas.Select(r => r.StatusCode).OrderBy(c => c).ToList();
+        Assert.Equal(new[] { HttpStatusCode.OK, HttpStatusCode.Conflict }, codigos);
+
+        var venda = await StatusVendaAsync(fabrica, codigo);
+        var status = await StatusVeiculoAsync(fabrica, veiculo);
+        var notificacoes = fabrica.Services.GetRequiredService<NotificadorEspiao>().Chamadas;
+        if (venda == StatusVenda.Concluida)
+        {
+            Assert.Equal(StatusVeiculoCopia.Vendido, status);
+            Assert.Equal(1, notificacoes);
+        }
+        else
+        {
+            Assert.Equal(StatusVenda.Cancelada, venda);
+            Assert.Equal(StatusVeiculoCopia.Disponivel, status);
+            Assert.Equal(0, notificacoes);
+        }
+    }
+
+    [Fact]
+    public async Task Receber_MesmoResultadoEmParalelo_AplicaUmaVezENotificaUmaVez()
+    {
+        using var fabrica = new ApiComNotificadorEspiao(keycloak, postgres);
+        var codigo = NovoCodigo();
+        await SemearVendaReservadaAsync(fabrica, codigo);
+        var cliente = fabrica.CreateClient();
+        var corpo = Corpo(codigo, "aprovado");
+
+        var respostas = await Task.WhenAll(Enumerable.Range(0, 5).Select(_ => Enviar(cliente, corpo, Assinar(corpo))));
+
+        Assert.All(respostas, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        var alterou = new List<bool>();
+        foreach (var resposta in respostas)
+        {
+            alterou.Add((await resposta.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("alterou").GetBoolean());
+        }
+        Assert.Equal(1, alterou.Count(a => a));
+        Assert.Equal(StatusVenda.Concluida, await StatusVendaAsync(fabrica, codigo));
+        Assert.Equal(1, fabrica.Services.GetRequiredService<NotificadorEspiao>().Chamadas);
+    }
+
     private static string NovoCodigo() => Guid.NewGuid().ToString("N");
 
     private static string Corpo(string codigo, string resultado) =>
