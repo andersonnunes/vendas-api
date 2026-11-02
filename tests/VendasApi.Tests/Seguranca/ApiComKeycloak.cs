@@ -7,7 +7,7 @@ using VendasApi.Tests.Infraestrutura;
 
 namespace VendasApi.Tests.Seguranca;
 
-public sealed class ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture postgres, string clientId, string clientSecret)
+public class ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture postgres, string clientId, string clientSecret)
     : WebApplicationFactory<Program>
 {
     public ApiComKeycloak(KeycloakFixture keycloak, PostgresFixture postgres) : this(keycloak, postgres, "vendas-api", "dev-vendas-api-secret")
