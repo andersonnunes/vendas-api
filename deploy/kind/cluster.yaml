@@ -1,0 +1,18 @@
+# Cluster kind usado pelo CD (e para testar o deploy localmente). O containerd de cada node resolve
+# "localhost:5000" para o registry "kind-registry", que precisa estar ligado à rede do kind:
+#   docker run -d --restart=always --name kind-registry -p 5000:5000 registry:2
+#   docker network connect kind kind-registry
+# As imagens são publicadas nesse registry com `docker push localhost:5000/<imagem>`, sem
+# `kind load docker-image`.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+# Imagem de node fixada. Sem isso, o helm/kind-action do GitHub usa a imagem padrão da versão do
+# kind dele (v1.35), cujo kubelet não subiu no runner (falha em 4 minutos). A 1.27 é a que foi
+# testada localmente e a mesma que o kubeconform valida no CI.
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.27.3
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+      endpoint = ["http://kind-registry:5000"]

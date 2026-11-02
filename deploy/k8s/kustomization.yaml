@@ -1,0 +1,16 @@
+# Ponto de entrada do deploy: `kubectl apply -k deploy/k8s`.
+# A imagem abaixo é a de desenvolvimento local (registry em localhost:5000). No CD, o job troca
+# para o digest publicado no GHCR.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vendas
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - postgres.yaml
+  - api.yaml
+images:
+  - name: localhost:5000/vendas-api
+    newName: localhost:5000/vendas-api
+    newTag: dev

@@ -1,0 +1,10 @@
+# Configuração não secreta do vendas-api. As opções validadas na subida (Pagamentos__* e
+# VeiculosApi__BaseUrl) não vêm do appsettings.Development, porque o ambiente aqui é Production.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vendas-api-config
+  namespace: vendas
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  VeiculosApi__BaseUrl: http://veiculos-api.veiculos.svc.cluster.local:8080

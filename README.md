@@ -244,4 +244,31 @@ Todo Pull Request roda `dotnet restore`, `dotnet format --verify-no-changes`, `d
 com Trivy, que falha em qualquer HIGH ou CRITICAL. A branch `main` é protegida: só aceita merge com
 o workflow de CI verde.
 
-O deploy automatizado, disparado por merge em `main`, ainda não está implementado.
+### Deploy no Kubernetes (kind)
+
+Os manifests ficam em `deploy/k8s/` (namespace `vendas`, API, banco próprio com `StatefulSet`,
+`ConfigMap` e `Secret` de dev). O cluster de teste fica em `deploy/kind/cluster.yaml`.
+
+Testado localmente: o `Deployment` sobe, o pod fica `Ready` sem reinícios e `GET /health` responde
+`{"status":"healthy"}` dentro do cluster. Para reproduzir (o registry local e o cluster são os mesmos
+do `veiculos-api`):
+
+```bash
+docker build -t localhost:5000/vendas-api:dev -f src/VendasApi/Dockerfile .
+docker push localhost:5000/vendas-api:dev
+kubectl apply -k deploy/k8s
+kubectl -n vendas rollout status deployment/vendas-api --timeout=300s
+```
+
+### Pipeline no GitHub Actions
+
+O workflow `.github/workflows/ci.yml` tem quatro jobs:
+
+- **`build-test`** (PR e `main`): build, testes com cobertura ≥80%, scan da imagem com Trivy.
+- **`validar-manifests`** (PR e `main`): renderiza o kustomize e valida o schema com kubeconform.
+- **`publicar-imagem`** (só merge em `main`): publica em `ghcr.io/andersonnunes/vendas-api` com tag do SHA.
+- **`deploy`** (só merge em `main`): cria um `kind` efêmero, aponta a imagem para o digest, aplica
+  `deploy/k8s`, espera o rollout e faz smoke test em `/health`.
+
+**Estado:** o workflow rodou no GitHub com sucesso (execução manual via `workflow_dispatch`): as quatro
+jobs passaram, incluindo a publicação no GHCR e o deploy no `kind` com smoke test em `/health`.
